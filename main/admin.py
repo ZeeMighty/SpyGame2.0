@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Room, Locations, LocationsGroup, UpdateHistory
+
+from .models import Locations, LocationsGroup, Room, UpdateHistory
 
 admin.site.register(Room)
 admin.site.register(Locations)

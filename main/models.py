@@ -1,8 +1,10 @@
-from django.db import models
-from django.contrib.auth.hashers import make_password, check_password
-from django.conf import settings
 import secrets
+
+from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.validators import MinValueValidator
+from django.db import models
+
 
 class Room(models.Model):
     name = models.CharField(max_length=25)
@@ -12,8 +14,8 @@ class Room(models.Model):
     link = models.SlugField(max_length=50, unique=True, blank=True)
     password = models.CharField(max_length=128, null=True, blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, unique=False)
-    locations_group = models.ForeignKey('LocationsGroup', on_delete=models.CASCADE)
-    current_location = models.ForeignKey('Locations', on_delete=models.CASCADE)
+    locations_group = models.ForeignKey("LocationsGroup", on_delete=models.CASCADE)
+    current_location = models.ForeignKey("Locations", on_delete=models.CASCADE)
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
@@ -28,7 +30,7 @@ class Room(models.Model):
     def save(self, *args, **kwargs):
         if not self.link:
             self.link = self.generate_unique_link()
-        if self.password and not self.password.startswith('pbkdf2_sha256$'):
+        if self.password and not self.password.startswith("pbkdf2_sha256$"):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
@@ -63,6 +65,6 @@ class UpdateHistory(models.Model):
     
     class Meta:
         indexes = [
-            models.Index(fields=['room', 'device_hash']),
-            models.Index(fields=['updated_at']),
+            models.Index(fields=["room", "device_hash"]),
+            models.Index(fields=["updated_at"]),
         ]

@@ -1,8 +1,8 @@
-from email.policy import default
-from .models import Room, Locations
+
 from rest_framework import serializers
-import random
-import string
+
+from .models import Locations, Room
+
 
 class RoomSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -10,7 +10,7 @@ class RoomSerializer(serializers.ModelSerializer):
         write_only=True, 
         required=False,
         allow_blank=True,
-        style={'input_type': 'password'}
+        style={"input_type": "password"}
     )
 
     class Meta:
@@ -18,10 +18,10 @@ class RoomSerializer(serializers.ModelSerializer):
         # fields = ("title", "description", "price", "year", "brand", "model")
         fields = "__all__"
         extra_kwargs = {
-            'link': {'read_only': True},
-            'id_of_connected_player': {'read_only': False},
-            'name': {'read_only': False},
-            'num_of_players': {'read_only': False},
+            "link": {"read_only": True},
+            "id_of_connected_player": {"read_only": False},
+            "name": {"read_only": False},
+            "num_of_players": {"read_only": False},
         }
     # def get_fields(self):
     #     fields = super().get_fields()
