@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Room, UpdateHistory
-from .roomlogic import MyMixin, join_room, refresh_room
+from .roomlogic import (
+    MyMixin, join_room, refresh_room,
+    room_create, creator_id, set_id_of_connected_player
+)
 from .serializers import RoleSerializer, RoomSerializer
 
 
@@ -28,23 +31,46 @@ class RoomViewSet(viewsets.ModelViewSet, MyMixin):
             return [permissions.IsAuthenticatedOrReadOnly()]
         return [permissions.AllowAny()]
 
+    def create(self, request, *args, **kwargs):
+        device_hash = self.generate_device_hash(request)
+        modified_data = room_create(request)
+        if modified_data != "error":
+            serializer = self.get_serializer(data=modified_data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+            my_id = creator_id(instance, device_hash)
+            return good_redirect(f"/api/v1/rooms/{instance.link}/{my_id}")
+        else:
+            return Response({"error": "Не выбрана группа локаций"}, status=status.HTTP_404_NOT_FOUND)
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
         device_hash = self.generate_device_hash(request)
         if instance.owner != request.user:
-            link = join_room(request, instance, serializer, device_hash)
-            if link != None and type(link) is not dict:
+            data = join_room(request, instance, device_hash)
+            if data != "error":
+                serializer = self.get_serializer(instance, data=data["filtered_data"], partial=True)
                 if serializer.is_valid():
-                    self.perform_update(serializer)
-                return good_redirect(link)
-            elif type(link) is dict:
-                return Response(link)
+                    id_of_connected_player = set_id_of_connected_player(serializer)
+                    if id_of_connected_player != "full":
+                        serializer.validated_data["id_of_connected_player"] = id_of_connected_player
+                        self.perform_update(serializer)
+                        link = data["link"]
+                        return good_redirect(link)
+                    else:
+                        return Response({"error": "Комната заполнена!"})
+
+            else:
+                return Response({"error": "Неверный пароль"})
         else:
-            refresh_room(instance)
-        if serializer.is_valid():
-            self.perform_update(serializer)
-            return Response(serializer.data)
+            modified_data = refresh_room(instance, request, device_hash)
+            serializer = self.get_serializer(instance, data=modified_data, partial=True)
+            my_id = creator_id(instance, device_hash)
+            if serializer.is_valid():
+                self.perform_update(serializer)
+                if my_id:
+                    return good_redirect(f"/api/v1/rooms/{instance.link}/{my_id}")
+                return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class RoleDetailView(APIView, MyMixin):
@@ -52,13 +78,19 @@ class RoleDetailView(APIView, MyMixin):
         device_hash = self.generate_device_hash(request)
         try:
             room = Room.objects.get(link=link)
+            # УДАЛИТЬ 4 СТРОЧКИ НИЖЕ!!! НОРМАЛЬНЫЙ DEVICE HASH!
+            if request.user == room.owner:
+                device_hash = "CreatorHASH"
+            else:
+                device_hash = "JOINERhash"
             recent_update = UpdateHistory.objects.filter(
             room=room,
             device_hash=device_hash,
             updated_at__gte=timezone.now() - timedelta(minutes=55)
             )
             if recent_update.exists():
-                if recent_update.get().my_room_id == player_id:
+                recent_update = recent_update.get()
+                if recent_update.my_room_id == player_id:
                     if room.spy_id != player_id:
                         instance = room.current_location
                         serializer = RoleSerializer(instance)

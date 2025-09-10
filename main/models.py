@@ -11,7 +11,7 @@ class Room(models.Model):
     num_of_players = models.IntegerField(validators=[MinValueValidator(limit_value=3, message="Минимум 3 игрока")])
     id_of_connected_player = models.IntegerField(default=0)
     spy_id = models.IntegerField(default=0)
-    link = models.SlugField(max_length=50, unique=True, blank=True)
+    link = models.SlugField(max_length=50, unique=True)
     password = models.CharField(max_length=128, null=True, blank=True)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, unique=False)
     locations_group = models.ForeignKey("LocationsGroup", on_delete=models.CASCADE)
@@ -51,7 +51,7 @@ class Locations(models.Model):
         return self.location
 
 class LocationsGroup(models.Model):
-    name = models.CharField(max_length=25)
+    name = models.CharField(max_length=25, unique=True)
     locations = models.ManyToManyField(Locations, blank=True, null=True)
 
     def __str__(self) -> str:
