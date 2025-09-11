@@ -22,16 +22,28 @@ class MyMixin:
         serializer.validated_data.pop('current_location', None)
         return super().perform_update(serializer)
 
-def set_id_of_connected_player(serializer):
+def set_id_of_connected_player(serializer, device_hash):
     instance = serializer.instance
-    if instance.id_of_connected_player < instance.num_of_players:
-        current_id = instance.id_of_connected_player + 1
-        id_list = UpdateHistory.objects.filter(room=instance).values_list('my_room_id', flat=True)
-        if current_id in id_list:
-            current_id += 1    
-        return current_id
+    recent_update = UpdateHistory.objects.filter(
+        room=instance,
+        device_hash=device_hash,
+        updated_at__gte=timezone.now() - timedelta(minutes=55)
+    )
+    if recent_update.exists():
+        try:
+            recent_update = recent_update.first()
+        except UpdateHistory.DoesNotExist:
+            return Response({"error": "Нет такого recent_update"})
+        if instance.id_of_connected_player < instance.num_of_players:
+            current_id = recent_update.my_room_id + 1
+            id_list = UpdateHistory.objects.filter(room=instance).values_list('my_room_id', flat=True)
+            if current_id in id_list:
+                current_id += 1    
+            return current_id
+        else:
+            return "full"
     else:
-        return "full"
+        return instance.id_of_connected_player
 
 def room_create(request):
     try:
@@ -53,7 +65,7 @@ def room_create(request):
 def creator_id(instance, device_hash):
     random_id = random.randint(1, int(instance.num_of_players)-1)
     # УДАЛИТЬ СТРОЧКУ НИЖЕ!!! НОРМАЛЬНЫЙ DEVICE HASH!
-    device_hash = "CreatorHASH"
+    # device_hash = "CreatorHASH"
     UpdateHistory.objects.create(room=instance, device_hash=device_hash, my_room_id=random_id)
     return random_id
 
@@ -67,7 +79,7 @@ def join_room(request, instance, device_hash):
         if key in allowed_fields
     }
     # УДАЛИТЬ СТРОЧКУ НИЖЕ!!! НОРМАЛЬНЫЙ DEVICE HASH!
-    device_hash = "JOINERhash"
+    # device_hash = "JOINERhash"
     recent_update = UpdateHistory.objects.filter(
         room=instance,
         device_hash=device_hash,
@@ -79,7 +91,7 @@ def join_room(request, instance, device_hash):
         return {"link": f"/api/v1/rooms/{instance.link}/{my_room_id}/", "filtered_data": filtered_data}
     else:
         # УДАЛИТЬ СТРОЧКУ НИЖЕ!!! НОРМАЛЬНЫЙ DEVICE HASH!
-        device_hash = "JOINERhash"
+        # device_hash = "JOINERhash"
         UpdateHistory.objects.create(room=instance, device_hash=device_hash, my_room_id=instance.id_of_connected_player)
         my_room_id = instance.id_of_connected_player
         return {"link": f"/api/v1/rooms/{instance.link}/{my_room_id}/", "filtered_data": filtered_data}

@@ -51,7 +51,7 @@ class RoomViewSet(viewsets.ModelViewSet, MyMixin):
             if data != "error":
                 serializer = self.get_serializer(instance, data=data["filtered_data"], partial=True)
                 if serializer.is_valid():
-                    id_of_connected_player = set_id_of_connected_player(serializer)
+                    id_of_connected_player = set_id_of_connected_player(serializer, device_hash)
                     if id_of_connected_player != "full":
                         serializer.validated_data["id_of_connected_player"] = id_of_connected_player
                         self.perform_update(serializer)
@@ -76,13 +76,14 @@ class RoomViewSet(viewsets.ModelViewSet, MyMixin):
 class RoleDetailView(APIView, MyMixin):
     def get(self, request, link, player_id, format=None):
         device_hash = self.generate_device_hash(request)
+        print(device_hash)
         try:
             room = Room.objects.get(link=link)
             # УДАЛИТЬ 4 СТРОЧКИ НИЖЕ!!! НОРМАЛЬНЫЙ DEVICE HASH!
-            if request.user == room.owner:
-                device_hash = "CreatorHASH"
-            else:
-                device_hash = "JOINERhash"
+            # if request.user == room.owner:
+            #     device_hash = "CreatorHASH"
+            # else:
+            #     device_hash = "JOINERhash"
             recent_update = UpdateHistory.objects.filter(
             room=room,
             device_hash=device_hash,
