@@ -77,6 +77,9 @@ class RoomConnectionView():
     queryset = RoomConnection.objects.all()
     serializer_class = RoomConnectionSerializer
 
+# НЕ ЗАБУДЬ Проверить нет ли уже такой RoomConnection!!!
+# НЕ ЗАБУДЬ Проверить нет ли уже такой RoomConnection!!!
+# НЕ ЗАБУДЬ Проверить нет ли уже такой RoomConnection!!!
 class RoomConnectionView(APIView):
     def get(self, request, link):
         # Получаем комнату по slug (link)
