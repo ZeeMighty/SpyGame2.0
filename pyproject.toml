@@ -1,0 +1,47 @@
+[project]
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 90
+src = ["src"]
+exclude = ["*/migrations/*.py", "tests/*"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["bgr", "config"]
+
+[tool.ruff.lint]
+select = [
+    "ANN",      # flake8-annotations
+    "B",        # flake8-bugbear
+    "E",        # pycodestyle
+    "F",        # Pyflakes
+    "I",        # isort
+    "LOG",      # flake8-logging 
+    "N",        # pep8-naming
+    "Q",        # flake8-quotes
+    "SIM",      # flake8-simplify
+    "UP",       # pyupgrade
+    "RUF100",   # Ruff-specific rules: unused noqa
+    "T20",      # flake8-print
+]
+
+ignore = [
+    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed in {name}
+    "SIM108",  # ternary operator
+    "N802",    # Allow non-lowercase function names
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+"**/test_*.py" = ["ANN201", "ANN206", "ANN001"]
+"**/tests.py" = ["ANN201", "ANN206", "ANN001"]
+"*/tests/*.py" = ["ANN201", "ANN206", "ANN001"]
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    "classmethod",
+    "pydantic.validator",
+    "pydantic.field_validator",
+    "pydantic.root_validator",
+    "classproperty",
+]

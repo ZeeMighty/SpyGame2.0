@@ -30,15 +30,11 @@ def set_id_of_connected_player(serializer, device_hash):
         updated_at__gte=timezone.now() - timedelta(minutes=55)
     )
     if recent_update.exists():
-        try:
-            recent_update = recent_update.first()
-        except UpdateHistory.DoesNotExist:
-            return Response({"error": "Нет такого recent_update"})
+        recent_update = recent_update.first()
         if instance.id_of_connected_player < instance.num_of_players:
             current_id = recent_update.my_room_id + 1
-            id_list = UpdateHistory.objects.filter(room=instance).values_list('my_room_id', flat=True)
-            if current_id in id_list:
-                current_id += 1    
+            if UpdateHistory.objects.filter(room=instance, my_room_id=current_id).exists():
+                current_id += 1
             return current_id
         else:
             return "full"
@@ -64,8 +60,6 @@ def room_create(request):
 
 def creator_id(instance, device_hash):
     random_id = random.randint(1, int(instance.num_of_players)-1)
-    # УДАЛИТЬ СТРОЧКУ НИЖЕ!!! НОРМАЛЬНЫЙ DEVICE HASH!
-    # device_hash = "CreatorHASH"
     UpdateHistory.objects.create(room=instance, device_hash=device_hash, my_room_id=random_id)
     return random_id
 
@@ -73,7 +67,7 @@ def join_room(request, instance, device_hash):
     password = request.data.get("password", "")
     if instance.has_password() and not instance.check_password(password):
         return "error"
-    allowed_fields = ["if_of_connected_player"]
+    allowed_fields = ["id_of_connected_player"]
     filtered_data = {
         key: value for key, value in request.data.items() 
         if key in allowed_fields
