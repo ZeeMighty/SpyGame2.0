@@ -2,7 +2,7 @@
 from dataclasses import field
 from rest_framework import serializers
 
-from .models import Locations, Room, LocationsGroup
+from .models import Locations, Room, LocationsGroup, RoomConnection
 from django.contrib.auth.hashers import make_password
 
 
@@ -15,24 +15,6 @@ class LocationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Locations
         fields = ['location', 'description']
-
-# class RoomListSerializer(serializers.ModelSerializer):
-#     password = serializers.CharField(
-#         write_only=True, 
-#         required=False,
-#         allow_blank=True,
-#         style={"input_type": "password"}
-#     )
-#     locations_group_name = LocationsGroupSerializer(source="locations_group", read_only=True)
-#     class Meta:
-#         model = Room
-#         fields = ["name", "num_of_players", "owner", "locations_group_name", "password"]
-    
-#     def validate_password(self, value):
-#         room = self.instance
-#         if value and room.password != value:
-#             raise serializers.ValidationError("Неверный пароль")
-#         return value
 
 class RoomSerializer(serializers.ModelSerializer):
     locations_group_name = LocationsGroupSerializer(source="locations_group", read_only=True)
@@ -63,3 +45,16 @@ class RoomSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+class RoomMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = ['id', 'name', 'num_of_players', 'link', 'spy_id']
+
+class RoomConnectionSerializer(serializers.ModelSerializer):
+    room = RoomMiniSerializer(read_only=True)
+    location_to_show = LocationsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RoomConnection
+        fields = "__all__"

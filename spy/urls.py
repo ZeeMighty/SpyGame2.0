@@ -43,7 +43,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from main.views import RoleDetailView, RoomViewSet
+from main.views import RoleDetailView, RoomViewSet, RoomConnectionView
 from rest_framework import permissions, routers
 from rest_framework.routers import DefaultRouter
 
@@ -76,6 +76,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include(router.urls)),  # http://127.0.0.1:8000/api/v1/rooms/(1-2-3-4-5)
     path("api/v1/rooms/<str:link>/<int:player_id>/", RoleDetailView.as_view()),
+    path('api/v1/rooms/<slug:link>/connect/', RoomConnectionView.as_view(), name='room-connect'),
     path("api/v1/auth/", include("djoser.urls")),
     re_path(r"^auth/", include("djoser.urls.authtoken")),
 ]

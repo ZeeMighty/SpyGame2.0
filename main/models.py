@@ -57,14 +57,13 @@ class LocationsGroup(models.Model):
     def __str__(self) -> str:
         return self.name
     
-class UpdateHistory(models.Model):
+class RoomConnection(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     my_room_id = models.IntegerField()
     device_hash = models.CharField(max_length=64)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    location_to_show = models.ManyToManyField(Locations, blank=True, null=True)
     
     class Meta:
         indexes = [
             models.Index(fields=["room", "device_hash"]),
-            models.Index(fields=["updated_at"]),
         ]
