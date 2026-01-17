@@ -9,7 +9,6 @@ from django.db import models
 class Room(models.Model):
     name = models.CharField(max_length=25)
     num_of_players = models.IntegerField(validators=[MinValueValidator(limit_value=3, message="Минимум 3 игрока")])
-    id_of_connected_player = models.IntegerField(default=0)
     spy_id = models.IntegerField(default=0)
     link = models.SlugField(max_length=50, unique=True)
     password = models.CharField(max_length=128, null=True, blank=True)
